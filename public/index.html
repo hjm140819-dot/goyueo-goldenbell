@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>고유어 탐험대</title>
+<style>
+:root{--ink:#25304a;--muted:#68738b;--paper:#fffdf8;--purple:#7057d9;--mint:#dff7eb;--yellow:#ffe69a}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;color:var(--ink);background:radial-gradient(circle at 10% 10%,#d9f5ec,transparent 30%),radial-gradient(circle at 90% 20%,#e7e0ff,transparent 28%),#f4f6ff;display:grid;place-items:center;padding:18px}
+.app{width:min(720px,100%);background:var(--paper);border:3px solid #fff;border-radius:28px;box-shadow:0 18px 55px #343d641c;padding:clamp(20px,5vw,38px)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.tag{background:var(--mint);padding:8px 13px;border-radius:99px;font-weight:800;font-size:13px}
+.score{font-weight:800;color:var(--purple)}
+h1{font-size:clamp(30px,6vw,46px);line-height:1.15;margin:22px 0 8px;letter-spacing:-1.5px}
+.sub{color:var(--muted);line-height:1.6;margin:0 0 24px}
+.hero{font-size:64px;margin:12px 0}
+button{font:inherit;cursor:pointer;border:0}
+.primary{background:var(--purple);color:white;border-radius:15px;padding:15px 24px;font-weight:800;box-shadow:0 5px 0 #503bb2;transition:.12s}
+.primary:active{transform:translateY(3px);box-shadow:0 2px 0 #503bb2}
+.primary:focus-visible,.choice:focus-visible{outline:3px solid #ffb84d;outline-offset:3px}
+.progressline{height:10px;background:#ececf5;border-radius:99px;overflow:hidden;margin:20px 0 8px}
+.progress{height:100%;width:0;background:linear-gradient(90deg,#6c55d8,#55c9a0);transition:width .25s}
+.meta{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;font-weight:700}
+.question{font-size:clamp(21px,4vw,28px);font-weight:850;line-height:1.45;margin:25px 0 18px}
+.choices{display:grid;gap:11px}
+.choice{background:white;border:2px solid #e6e7f0;border-radius:15px;padding:15px;text-align:left;font-weight:750;color:var(--ink);display:flex;gap:12px;align-items:center;transition:.15s}
+.choice:hover:not(:disabled){border-color:#9d8eea;transform:translateY(-1px)}
+.letter{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:#f0edff;color:var(--purple);flex:none}
+.choice.correct{background:#e9f9f0;border-color:#55bd85}
+.choice.wrong{background:#fff0ed;border-color:#ef8978}
+.choice:disabled{cursor:default}
+.feedback{display:none;margin-top:17px;padding:15px 17px;border-radius:15px;line-height:1.6;background:#f1f0ff}
+.feedback.show{display:block}
+.nextrow{display:flex;justify-content:flex-end;margin-top:17px}
+.hidden{display:none!important}
+.result{text-align:center}
+.bigscore{font-size:clamp(48px,10vw,72px);font-weight:950;color:var(--purple);margin:12px}
+.stars{font-size:35px;letter-spacing:5px}
+.small{font-size:13px;color:var(--muted)}
+footer{text-align:center;color:#9aa1b3;font-size:12px;margin-top:24px}
+</style>
+</head>
+<body>
+<main class="app">
+  <section id="start">
+    <div class="top"><span class="tag">우리말 보물찾기</span><span class="score">✨ 고유어 탐험대</span></div>
+    <div class="hero">🧭📚</div>
+    <h1>고유어 탐험대</h1>
+    <p class="sub">우리말 속에 숨은 예쁜 고유어를 찾아보자!<br>뜻을 읽고 알맞은 낱말을 고르면 돼.</p>
+    <p class="sub">총 10문제 · 객관식 · 정답을 고르면 뜻풀이도 알려줘!</p>
+    <button class="primary" id="startBtn">탐험 시작하기 →</button>
+  </section>
+
+  <section id="game" class="hidden">
+    <div class="top"><span class="tag">🌿 고유어 퀴즈</span><span class="score" id="score">점수 0점</span></div>
+    <div class="progressline"><div class="progress" id="progress"></div></div>
+    <div class="meta"><span id="count">1 / 10</span><span>정답을 골라 봐!</span></div>
+    <div class="question" id="question"></div>
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <div class="nextrow"><button class="primary hidden" id="nextBtn">다음 문제 →</button></div>
+  </section>
+
+  <section id="result" class="hidden result">
+    <div class="stars" id="stars">🌟</div>
+    <h1>탐험 완료!</h1>
+    <div class="bigscore" id="finalScore">0점</div>
+    <p class="sub" id="resultText"></p>
+    <button class="primary" id="againBtn">다시 도전하기 ↻</button>
+  </section>
+  <footer>고유어 탐험대 · 우리말을 알아가는 즐거운 시간</footer>
+</main>
+<script>
+const questions = [
+ {q:"‘가랑비’의 뜻은 무엇일까?",a:["굵고 세차게 내리는 비","조금씩 보슬보슬 내리는 비","눈과 비가 함께 내리는 것","오래도록 내리지 않는 비"],c:1,e:"가랑비는 가늘고 조금씩 내리는 비를 뜻해."},
+ {q:"‘나비잠’은 어떤 잠일까?",a:["깊이 들어 아주 오래 자는 잠","잠깐 눈을 붙이는 잠","갓난아기가 두 팔을 머리 위로 벌리고 자는 잠","꿈을 많이 꾸는 잠"],c:2,e:"나비잠은 갓난아기가 두 팔을 머리 위로 벌리고 자는 모양을 빗댄 말이야."},
+ {q:"‘윤슬’의 뜻으로 알맞은 것은?",a:["햇빛이나 달빛에 비쳐 반짝이는 잔물결","바람에 흔들리는 나뭇잎","새벽에 내리는 이슬","구름 사이로 보이는 햇살"],c:0,e:"윤슬은 햇빛이나 달빛에 비치어 반짝이는 잔물결을 뜻해."},
+ {q:"‘도란도란’은 어떤 모습이나 소리일까?",a:["큰 소리로 다투는 모습","여럿이 나직하고 정답게 이야기하는 소리","빠르게 달려가는 모습","물이 세차게 흐르는 소리"],c:1,e:"도란도란은 여럿이 정답게 이야기하는 소리를 나타내는 말이야."},
+ {q:"‘모꼬지’의 뜻은 무엇일까?",a:["여럿이 함께 놀거나 잔치하는 일","혼자 조용히 책을 읽는 일","먼 곳으로 이사하는 일","물건을 서로 바꾸는 일"],c:0,e:"모꼬지는 놀이나 잔치 또는 그 밖의 여러 모임을 뜻해."},
+ {q:"‘바람꽃’은 무엇을 가리키는 말일까?",a:["바람이 지나간 자리","바람에 날리는 꽃잎","큰 바람이 불기 전에 먼 산에 구름처럼 끼는 보얀 기운","바람을 막아 주는 나무"],c:2,e:"바람꽃은 큰 바람이 불기 전에 먼 산에 구름같이 끼는 뽀얀 기운을 이르는 말이야."},
+ {q:"‘시나브로’의 뜻은?",a:["갑자기 한꺼번에","천천히 조금씩, 모르는 사이에","힘껏 빠르게","일부러 거꾸로"],c:1,e:"시나브로는 모르는 사이에 조금씩 조금씩이라는 뜻이야."},
+ {q:"‘아람’은 어떤 상태의 열매일까?",a:["아직 꽃이 피지 않은 상태","벌레가 먹은 상태","충분히 익어 저절로 벌어질 정도가 된 상태","막 싹이 튼 상태"],c:2,e:"아람은 밤이나 상수리 따위가 충분히 익어 저절로 떨어질 정도가 된 상태를 뜻해."},
+ {q:"‘해거름’은 언제일까?",a:["해가 질 무렵","해가 뜨기 직전","한낮","밤이 깊은 때"],c:0,e:"해거름은 해가 서쪽으로 넘어가는 때, 곧 해 질 무렵이야."},
+ {q:"‘꽃샘추위’는 어떤 추위일까?",a:["한여름에 갑자기 오는 추위","꽃이 필 무렵 이른 봄에 찾아오는 추위","가을 낙엽이 질 때의 추위","겨울에 눈이 많이 올 때의 추위"],c:1,e:"꽃샘추위는 이른 봄, 꽃이 필 무렵에 갑자기 찾아오는 추위를 말해."}
+];
+let order=[], index=0, score=0, locked=false;
+const $=id=>document.getElementById(id);
+function show(which){["start","game","result"].forEach(x=>$(x).classList.toggle("hidden",x!==which));}
+function start(){order=[...questions].sort(()=>Math.random()-.5);index=0;score=0;show("game");render();}
+function render(){
+ locked=false;const item=order[index];
+ $("count").textContent=`${index+1} / ${order.length}`;
+ $("score").textContent=`점수 ${score}점`;
+ $("progress").style.width=`${index/order.length*100}%`;
+ $("question").textContent=item.q;
+ $("feedback").className="feedback";$("feedback").textContent="";
+ $("nextBtn").classList.add("hidden");
+ $("choices").innerHTML="";
+ item.a.forEach((answer,i)=>{
+  const b=document.createElement("button");b.className="choice";
+  const letter=document.createElement("span");letter.className="letter";letter.textContent=["A","B","C","D"][i];
+  const label=document.createElement("span");label.textContent=answer;
+  b.append(letter,label);b.addEventListener("click",()=>choose(i));$("choices").append(b);
+ });
+}
+function choose(n){
+ if(locked)return;locked=true;const item=order[index];const buttons=[...$("choices").children];
+ buttons.forEach((b,i)=>{b.disabled=true;if(i===item.c)b.classList.add("correct");else if(i===n)b.classList.add("wrong");});
+ if(n===item.c){score+=10;$("score").textContent=`점수 ${score}점`;$("feedback").textContent="🎉 정답이야! "+item.e;}
+ else $("feedback").textContent="아쉽지만 괜찮아! 정답은 ‘"+item.a[item.c]+"’이야. "+item.e;
+ $("feedback").classList.add("show");
+ $("nextBtn").textContent=index===order.length-1?"결과 보기 →":"다음 문제 →";
+ $("nextBtn").classList.remove("hidden");
+}
+function next(){index++;if(index<order.length)render();else finish();}
+function finish(){
+ show("result");$("progress").style.width="100%";$("finalScore").textContent=score+"점";
+ $("stars").textContent=score===100?"🏆🌟🏆":score>=70?"🌟🎉🌟":score>=40?"👏🌿👏":"🌱📚🌱";
+ $("resultText").textContent=score===100?"완벽해! 고유어 박사라고 불러도 되겠어!":score>=70?"정말 잘했어! 우리말 보물을 많이 찾았네.":score>=40?"좋은 도전이야! 다시 풀면 더 잘할 수 있어.":"첫 탐험 완료! 뜻풀이를 읽고 다시 도전해 보자!";
+}
+$("startBtn").onclick=start;$("nextBtn").onclick=next;$("againBtn").onclick=start;
+</script>
+</body>
+</html>
